@@ -45,7 +45,7 @@ const stacy_mtl = new THREE.MeshPhongMaterial({
 var stacy = null;
 
 const loader = new THREE.GLTFLoader();
-new Promise((resolve, reject) => {
+const stacy_loading = new Promise((resolve, reject) => {
   loader.load( MODEL_PATH, resolve,
     undefined, // We don't need this function
     reject ); })
@@ -58,6 +58,7 @@ new Promise((resolve, reject) => {
         o.castShadow = true;
         o.receiveShadow = true;
         o.material = stacy_mtl;
+        o.visible = false;
       }
       if (o.isBone) {
         bones[o.name] = o;
@@ -175,11 +176,6 @@ const canvasCtx = canvasElement.getContext('2d');
 
 var hand_results;
 
-function makeStacyFromMediapipe(mediapipe_data){
-  let stacy = {};
-  
-}
-
 const MEDIAPIPE_TO_THREE = {
   leftHandLandmarks: {
     0: 'mixamorigLeftHand',
@@ -202,37 +198,56 @@ const MEDIAPIPE_TO_THREE = {
   },
 };
 
-const connectors = {
-  central : [
-    [11, 12],
-    [23, 24],
-  ],
-  symetric: [
-    [15, 19],
-    [15, 17],
-    [15, 21],
-    [13, 15],
-    [11, 13],
-    [23, 11],
-    [23, 25],
-    [25, 27],
-    [27, 29],
-    [27, 31],
-  ]
-};
+function make_connectors(){
+  const connectors_summary = {
+    central : [
+      [11, 12],
+      [23, 24],
+    ],
+    symetric: [
+      [15, 19],
+      [15, 17],
+      [15, 21],
+      [13, 15],
+      [11, 13],
+      [23, 11],
+      [23, 25],
+      [25, 27],
+      [27, 29],
+      [27, 31],
+    ]
+  };
+  let connectors = [];
+  for(const pair of connectors_summary.central){
+    connectors.push([pair[0], pair[1]]);
+  }
+  for(const pair of connectors_summary.symetric){
+    connectors.push([pair[0], pair[1]]);
+    connectors.push([pair[0] + 1, pair[1] + 1]);
+  }
+  return connectors;
+}
 
-let cylinder_geometry = new THREE.CylinderGeometry(0.5, 0.5);
+const connectors = make_connectors();
+
+let cylinder_geometry = new THREE.CylinderGeometry(0.05, 0.05);
 let cylinder_material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
 
 let spheres = [];
 let cylinders = [];
-for(const pair of connectors.central){
-  cylinders[`${pair[0]}_${pair[1]}`] = new THREE.Mesh(cylinder_geometry, cylinder_material);
-}
-for(const pair of connectors.symetric){
-  cylinders[`${pair[0]}_${pair[1]}`] = new THREE.Mesh(cylinder_geometry, cylinder_material);
-  cylinders[`${pair[0] + 1}_${pair[1] + 1}`] = new THREE.Mesh(cylinder_geometry, cylinder_material);
-}
+let lines = [];
+stacy_loading.then( () => {
+  for(const connector_pair of connectors){
+    let cylinder = new THREE.Mesh( cylinder_geometry, cylinder_material );
+    cylinders[connector_pair.join(',')] = cylinder;
+    model.add(cylinder);
+
+    let line_geometry = new THREE.BufferGeometry();
+    let line = new THREE.Line( line_geometry, cylinder_material);
+    lines[connector_pair.join(',')] = line;
+    model.add(line);
+  }
+});
 
 let sphere_geometry = new THREE.SphereGeometry(0.02);
 let sphere_material = new THREE.MeshBasicMaterial({ color: 0xff0000 });
@@ -262,7 +277,7 @@ function rotatePointTo(parent, child, target){
   child.quaternion.setFromAxisAngle( vector, angle );
 }
 
-const MAX_POINTS = 100;
+const MAX_POINTS = 5;
 var nb_points = 0;
 var sum_offset = new THREE.Vector3(0, 0, 0);
 var sum_factor = 0;
@@ -336,20 +351,27 @@ function onResults(results) {
         hips.position.clone().multiply( stacy.scale ).applyQuaternion( stacy.quaternion )
       )
     );
-    console.log('Hips: ', hips.position.clone().multiply( stacy.scale ).applyQuaternion( stacy.quaternion ) );
-    console.log('Setting Stacy to ', stacy.position);
-    console.log('(world:)', stacy.parent.localToWorld( stacy.position.clone() ));
-    console.log('(world:)', stacy.getWorldPosition( new THREE.Vector3(0, 0, 0) ));
-  }
 
-  for(let batch of [results.poseWorldLandmarks]){
-    for(let point_index in batch){
-      if(spheres[point_index] === undefined){
-        spheres[point_index] = new THREE.Mesh(sphere_geometry, sphere_material);
-        model.add(spheres[point_index]);
+    for(let pair of connectors){
+      let first_endpoint = to_three( results.poseLandmarks[pair[0]] ),
+        second_endpoint = to_three( results.poseLandmarks[pair[1]] );
+      cylinders[pair.join(',')].scale.y = second_endpoint.clone().sub(first_endpoint).length();
+      cylinders[pair.join(',')].lookAt( model.localToWorld( first_endpoint.clone() ) )
+      cylinders[pair.join(',')].rotateX( Math.PI / 2 );
+      set(cylinders[pair.join(',')].position, second_endpoint.clone().add(first_endpoint).divideScalar(2) );
+
+      lines[pair.join(',')].geometry.setFromPoints( pair );
+    }
+
+    for(let batch of [ results.poseLandmarks ]){
+      for(let point_index in batch){
+        if(spheres[point_index] === undefined){
+          spheres[point_index] = new THREE.Mesh(sphere_geometry, sphere_material);
+          model.add(spheres[point_index]);
+        }
+        const new_coords = to_three(batch[point_index]);
+        set( spheres[point_index].position, new_coords);
       }
-      const new_coords = to_three(batch[point_index]);
-      for(let c of ['x', 'y', 'z']) spheres[point_index].position[c] = new_coords[c];
     }
   }
 
@@ -361,10 +383,8 @@ function onResults(results) {
         let joint_three = bones[boneName];
         rotatePointTo(joint_three.parent, joint_three, joint_three.worldToLocal(position_mediapipe));
 */
-//        if(boneName == 'mixamorigLeftArm') console.log('Avatar global pos:', pr(position_mediapipe));
-//        position_mediapipe = bones[boneName].worldToLocal(position_mediapipe);
-//        set(bones[boneName].position, position_mediapipe.divideScalar(7));
-//        if(boneName == 'mixamorigLeftArm') console.log('Local:', pr(bones[boneName].position));
+        position_mediapipe = bones[boneName].worldToLocal( model.localToWorld( position_mediapipe ));
+        set(bones[boneName].position, position_mediapipe.divideScalar(7));
       }
     }
   }
