@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/pages/profile_page.dart';
+import 'package:flutter_application_1/pages/translate_page.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:line_icons/line_icons.dart';
+
+import 'add_page.dart';
+import 'learn_page.dart';
 
 void main() => runApp(MaterialApp(
     builder: (context, child) {
@@ -19,37 +24,25 @@ class Example extends StatefulWidget {
 
 class _ExampleState extends State<Example> {
   int _selectedIndex = 0;
-  static const TextStyle optionStyle =
-      TextStyle(fontSize: 30, fontWeight: FontWeight.w600);
-  static const List<Widget> _widgetOptions = <Widget>[
-    Text(
-      'Translate',
-      style: optionStyle,
-    ),
-    Text(
-      'Add',
-      style: optionStyle,
-    ),
-    Text(
-      'Learn',
-      style: optionStyle,
-    ),
-    Text(
-      'Profile',
-      style: optionStyle,
-    ),
-  ];
+  final PageController _pageController = PageController(initialPage: 0);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        elevation: 20,
-        title: const Text('App'),
-      ),
-      body: Center(
-        child: _widgetOptions.elementAt(_selectedIndex),
+      body: PageView(
+        controller: _pageController,
+        children: [
+          TranslatePage(),
+          AddPage(),
+          LearnPage(),
+          ProfilePage(),
+        ],
+        onPageChanged: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
@@ -96,6 +89,11 @@ class _ExampleState extends State<Example> {
               onTabChange: (index) {
                 setState(() {
                   _selectedIndex = index;
+                  _pageController.animateToPage(
+                    index,
+                    duration: Duration(milliseconds: 500),
+                    curve: Curves.ease,
+                  );
                 });
               },
             ),
