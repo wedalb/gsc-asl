@@ -1,31 +1,105 @@
 import 'package:flutter/material.dart';
+import 'package:google_nav_bar/google_nav_bar.dart';
+import 'package:line_icons/line_icons.dart';
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+void main() => runApp(MaterialApp(
+    builder: (context, child) {
+      return Directionality(textDirection: TextDirection.ltr, child: child!);
+    },
+    title: 'GNav',
+    theme: ThemeData(
+      primaryColor: Colors.blue[800],
+    ),
+    home: Example()));
 
+class Example extends StatefulWidget {
   @override
-  State<HomePage> createState() => _HomePageState();
+  _ExampleState createState() => _ExampleState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _ExampleState extends State<Example> {
+  int _selectedIndex = 0;
+  static const TextStyle optionStyle =
+      TextStyle(fontSize: 30, fontWeight: FontWeight.w600);
+  static const List<Widget> _widgetOptions = <Widget>[
+    Text(
+      'Translate',
+      style: optionStyle,
+    ),
+    Text(
+      'Add',
+      style: optionStyle,
+    ),
+    Text(
+      'Learn',
+      style: optionStyle,
+    ),
+    Text(
+      'Profile',
+      style: optionStyle,
+    ),
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[300],
-      body: SafeArea(
-        child: Column(
-          children: [
-            // app bar
-            Row(
-              children: [Text("Hello")],
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        elevation: 20,
+        title: const Text('App'),
+      ),
+      body: Center(
+        child: _widgetOptions.elementAt(_selectedIndex),
+      ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              blurRadius: 20,
+              color: Colors.black.withOpacity(.1),
             )
-
-            // search bar (search for a word or sentence to learn it)
-
-            // horizontal list -> card view
-
-            //
           ],
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 8),
+            child: GNav(
+              rippleColor: Colors.grey[300]!,
+              hoverColor: Colors.grey[100]!,
+              gap: 8,
+              activeColor: Colors.black,
+              iconSize: 24,
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              duration: Duration(milliseconds: 400),
+              tabBackgroundColor: Colors.grey[100]!,
+              color: Colors.black,
+              tabs: [
+                GButton(
+                  icon: LineIcons.speakap,
+                  text: 'Translate',
+                ),
+                GButton(
+                  icon: LineIcons.plus,
+                  text: 'Add',
+                ),
+                GButton(
+                  icon: LineIcons.brain,
+                  text: 'Learn',
+                ),
+                GButton(
+                  icon: LineIcons.user,
+                  text: 'Profile',
+                ),
+              ],
+              selectedIndex: _selectedIndex,
+              onTabChange: (index) {
+                setState(() {
+                  _selectedIndex = index;
+                });
+              },
+            ),
+          ),
         ),
       ),
     );
