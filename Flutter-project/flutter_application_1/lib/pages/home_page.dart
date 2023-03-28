@@ -58,15 +58,15 @@ class _ExampleState extends State<Example> {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 15.0, vertical: 8),
             child: GNav(
-              rippleColor: Colors.grey[300]!,
-              hoverColor: Colors.grey[100]!,
+              rippleColor: Colors.blue[300]!,
+              hoverColor: Colors.blue[100]!,
               gap: 8,
-              activeColor: Colors.black,
+              activeColor: Colors.blue,
               iconSize: 24,
               padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               duration: Duration(milliseconds: 400),
-              tabBackgroundColor: Colors.grey[100]!,
-              color: Colors.black,
+              tabBackgroundColor: Colors.blue[100]!,
+              color: Colors.blue,
               tabs: [
                 GButton(
                   icon: LineIcons.speakap,

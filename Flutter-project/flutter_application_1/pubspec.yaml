@@ -32,10 +32,10 @@ dependencies:
     sdk: flutter
   line_icons: ^2.0.0
   google_nav_bar: ^5.0.6
-  google_speech: ^2.0.1
   permission_handler: ^8.1.4+2
   loading_indicator: ^3.0.1
   downloads_path_provider_28: ^0.1.2
+  google_speech: ^2.1.2
   
 
 
