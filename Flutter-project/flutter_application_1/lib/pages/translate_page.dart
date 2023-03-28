@@ -1,9 +1,12 @@
-import 'dart:io';
-
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_speech/speech_client_authenticator.dart';
 import 'package:google_speech/google_speech.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:loading_indicator/loading_indicator.dart';
+import 'dart:io';
+import 'dart:async';
 
 void main() {
   runApp(MyApp());
@@ -14,165 +17,159 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Audio File Example',
+      debugShowCheckedModeBanner: false,
+      title: 'Flutter Demo',
       theme: ThemeData(
         primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
+        fontFamily: 'poppins',
       ),
-      home: TranslatePage(),
+      home: TranslatePage(
+        title: 'Flutter Demo Home Page',
+        key: null,
+      ),
     );
   }
 }
 
 class TranslatePage extends StatefulWidget {
+  TranslatePage({Key? key, required this.title}) : super(key: key);
+
+  final String title;
+
   @override
-  State<StatefulWidget> createState() => _TranslatePageState();
+  _TranslatePageState createState() => _TranslatePageState();
 }
 
 class _TranslatePageState extends State<TranslatePage> {
-  bool recognizing = false;
-  bool recognizeFinished = false;
-  String text = '';
+  bool is_Transcribing = false;
+  String content = '';
 
-  void recognize() async {
+  void transcribe() async {
     setState(() {
-      recognizing = true;
+      is_Transcribing = true;
     });
     final serviceAccount = ServiceAccount.fromString(
-        '${(await rootBundle.loadString('./test_service_account.json'))}');
+        '${(await rootBundle.loadString('./google_cloud_key.json'))}');
     final speechToText = SpeechToText.viaServiceAccount(serviceAccount);
-    final config = _getConfig();
-    final audio = await _getAudioContent('test.wav');
 
+    final config = RecognitionConfig(
+        encoding: AudioEncoding.LINEAR16,
+        model: RecognitionModel.basic,
+        enableAutomaticPunctuation: true,
+        sampleRateHertz: 16000,
+        languageCode: 'en-US');
+
+    final audio = await _getAudioContent('test.wav');
     await speechToText.recognize(config, audio).then((value) {
       setState(() {
-        text = value.results
+        content = value.results
             .map((e) => e.alternatives.first.transcript)
             .join('\n');
       });
-    }).whenComplete(() => setState(() {
-          recognizeFinished = true;
-          recognizing = false;
-        }));
-  }
-
-  void streamingRecognize() async {
-    setState(() {
-      recognizing = true;
-    });
-    final serviceAccount = ServiceAccount.fromString(
-        '${(await rootBundle.loadString('./test_service_account.json'))}');
-    final speechToText = SpeechToText.viaServiceAccount(serviceAccount);
-    final config = _getConfig();
-
-    final responseStream = speechToText.streamingRecognize(
-        StreamingRecognitionConfig(config: config, interimResults: true),
-        await _getAudioStream('test.wav'));
-
-    responseStream.listen((data) {
+    }).whenComplete(() {
       setState(() {
-        text =
-            data.results.map((e) => e.alternatives.first.transcript).join('\n');
-        recognizeFinished = true;
-      });
-    }, onDone: () {
-      setState(() {
-        recognizing = false;
+        is_Transcribing = false;
       });
     });
-  }
-
-  RecognitionConfig _getConfig() => RecognitionConfig(
-      encoding: AudioEncoding.LINEAR16,
-      model: RecognitionModel.basic,
-      enableAutomaticPunctuation: true,
-      sampleRateHertz: 16000,
-      languageCode: 'en-US');
-
-  Future<void> _copyFileFromAssets(String name) async {
-    var data = await rootBundle.load('assets/$name');
-    final directory = await getApplicationDocumentsDirectory();
-    final path = directory.path + '/$name';
-    await File(path).writeAsBytes(
-        data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes));
   }
 
   Future<List<int>> _getAudioContent(String name) async {
-    final directory = await getApplicationDocumentsDirectory();
-    final path = directory.path + '/$name';
-    if (!File(path).existsSync()) {
-      await _copyFileFromAssets(name);
-    }
+    //final directory = await getApplicationDocumentsDirectory();
+    //final path = directory.path + '/$name';
+    final path = '/sdcard/Download/temp.wav';
     return File(path).readAsBytesSync().toList();
   }
 
-  Future<Stream<List<int>>> _getAudioStream(String name) async {
-    final directory = await getApplicationDocumentsDirectory();
-    final path = directory.path + '/$name';
-    if (!File(path).existsSync()) {
-      await _copyFileFromAssets(name);
-    }
-    return File(path).openRead();
+  @override
+  void initState() {
+    setPermissions();
+    super.initState();
+  }
+
+  void setPermissions() async {
+    await Permission.manageExternalStorage.request();
+    await Permission.storage.request();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.purple[300],
       appBar: AppBar(
-        title: Text('Audio File Example'),
+        toolbarHeight: 80,
+        backgroundColor: Colors.purple[300],
+        elevation: 0,
+        centerTitle: true,
+        title: Text('Transcribe Your Audio'),
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: <Widget>[
-            if (recognizeFinished)
-              _RecognizeContent(
-                text: text,
-              ),
-            ElevatedButton(
-              onPressed: recognizing ? () {} : recognize,
-              child: recognizing
-                  ? CircularProgressIndicator()
-                  : Text('Test with recognize'),
+      body: SingleChildScrollView(
+        child: Container(
+          height: MediaQuery.of(context).size.height,
+          width: MediaQuery.of(context).size.width,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topRight: Radius.circular(50),
+              topLeft: Radius.circular(50),
             ),
-            SizedBox(
-              height: 10.0,
+          ),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: <Widget>[
+                SizedBox(
+                  height: 70,
+                ),
+                Container(
+                  height: 200,
+                  width: 300,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.black),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  padding: EdgeInsets.all(5.0),
+                  child: content == ''
+                      ? Text(
+                          'Your text will appear here',
+                          style: TextStyle(color: Colors.grey),
+                        )
+                      : Text(
+                          content,
+                          style: TextStyle(fontSize: 20),
+                        ),
+                ),
+                SizedBox(
+                  height: 10,
+                ),
+                Container(
+                  child: is_Transcribing
+                      ? Expanded(
+                          child: LoadingIndicator(
+                            indicatorType: Indicator.ballPulse,
+                            colors: [Colors.red, Colors.green, Colors.blue],
+                          ),
+                        )
+                      : ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            elevation: 10,
+                            primary: Colors.purple[300],
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                          ),
+                          onPressed: is_Transcribing ? () {} : transcribe,
+                          child: is_Transcribing
+                              ? CircularProgressIndicator()
+                              : Text(
+                                  'Transcribe',
+                                  style: TextStyle(fontSize: 20),
+                                ),
+                        ),
+                ),
+              ],
             ),
-            ElevatedButton(
-              onPressed: recognizing ? () {} : streamingRecognize,
-              child: recognizing
-                  ? CircularProgressIndicator()
-                  : Text('Test with streaming recognize'),
-            ),
-          ],
+          ),
         ),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
-    );
-  }
-}
-
-class _RecognizeContent extends StatelessWidget {
-  final String text;
-
-  const _RecognizeContent({Key? key, required this.text}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        children: <Widget>[
-          Text(
-            'The text recognized by the Google Speech Api:',
-          ),
-          SizedBox(
-            height: 16.0,
-          ),
-          Text(
-            text,
-            style: Theme.of(context).textTheme.bodyText1,
-          ),
-        ],
       ),
     );
   }

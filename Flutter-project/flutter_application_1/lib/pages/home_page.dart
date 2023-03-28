@@ -33,7 +33,9 @@ class _ExampleState extends State<Example> {
       body: PageView(
         controller: _pageController,
         children: [
-          TranslatePage(),
+          TranslatePage(
+            title: 'hello',
+          ),
           AddPage(),
           LearnPage(),
           ProfilePage(),
