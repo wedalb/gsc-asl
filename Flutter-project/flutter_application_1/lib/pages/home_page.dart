@@ -19,7 +19,7 @@ void main() => runApp(MaterialApp(
 
 class Example extends StatefulWidget {
   @override
-  _ExampleState createState() => _ExampleState();
+  State<Example> createState() => _ExampleState();
 }
 
 class _ExampleState extends State<Example> {

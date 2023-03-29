@@ -9,36 +9,13 @@ import 'package:loading_indicator/loading_indicator.dart';
 import 'dart:io';
 import 'dart:async';
 
-void main() {
-  runApp(MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  // This widget is the root of your application.
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        fontFamily: 'poppins',
-      ),
-      home: TranslatePage(
-        title: 'Flutter Demo Home Page',
-        key: null,
-      ),
-    );
-  }
-}
-
 class TranslatePage extends StatefulWidget {
   TranslatePage({Key? key, required this.title}) : super(key: key);
 
   final String title;
 
   @override
-  _TranslatePageState createState() => _TranslatePageState();
+  State<TranslatePage> createState() => _TranslatePageState();
 }
 
 class _TranslatePageState extends State<TranslatePage> {
@@ -50,7 +27,7 @@ class _TranslatePageState extends State<TranslatePage> {
       is_Transcribing = true;
     });
     final serviceAccount = ServiceAccount.fromString(
-        '${(await rootBundle.loadString('./google_cloud_key.json'))}');
+        await rootBundle.loadString('assets/google_cloud_key.json'));
     final speechToText = SpeechToText.viaServiceAccount(serviceAccount);
 
     final config = RecognitionConfig(
@@ -88,8 +65,11 @@ class _TranslatePageState extends State<TranslatePage> {
   }
 
   void setPermissions() async {
-    await Permission.manageExternalStorage.request();
-    await Permission.storage.request();
+    // The Permission API is only available on some platforms
+    if(!kIsWeb && (Platform.isAndroid || Platform.isIOS || Platform.isWindows)) {
+      await Permission.manageExternalStorage.request();
+      await Permission.storage.request();
+    }
   }
 
   @override
