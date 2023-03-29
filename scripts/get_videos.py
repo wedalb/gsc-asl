@@ -49,7 +49,7 @@ for speaker in metadata:
         try:
             in_filename = 'data/' + line['MOV'].replace('/', '_')
             cropped_video = VideoFileClip(in_filename).subclip(0.017 * line['Gloss start'], 0.017 * line['Gloss end'])
-            out_filename = 'results/' + line['Sign gloss'] + ".webm"
-            cropped_video.write_videofile(out_filename, fps=25, codec="libvpx")
+            out_filename = 'results/' + line['Sign gloss'] + ".mp4"
+            cropped_video.write_videofile(out_filename, fps=25)
         except FileExistsError:
             print('Output video', line['Sign gloss'], "already exists")
