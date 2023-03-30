@@ -1,5 +1,7 @@
-import 'package:chat_gpt_sdk/chat_gpt_sdk.dart';
 import 'package:flutter/services.dart';
+import 'package:chat_gpt_sdk/chat_gpt_sdk.dart'
+  if(dart.library.html) 'package:flutter_application_1/polyfills/web/chat_gpt_sdk.dart'
+  as openai;
 
 class GlobalData {
   static var server = _Server();
@@ -9,25 +11,25 @@ class _Server {
   Stream<String>? _textEnglishStream;
   Stream<String>? _textASLStream;
 
-  OpenAI? chatGPT;
+  openai.OpenAI? chatGPT;
 
   Future<void> init() async {
     if(chatGPT != null) return;
     final token = await rootBundle.loadString('assets/chatgpt_token.txt');
-    chatGPT = OpenAI.instance.build(
+    chatGPT = openai.OpenAI.instance.build(
       token: token,
     );
   }
 
   Future<String> _translateTextToASL(String englishText) async {
-    const prompt = "Act as an english to ASL grammar translation machine. Don't speak anything but the translation. Don't say „Gesture“ and just convert english grammar to ASL grammar. The sign to be translated starts with a < and ends with >";
+    const prompt = "Translate the following text to ASL gloss:";
 
     print('Me:\n$englishText\n---');
-    final request = CompleteText(
-      model: kTextDavinci3,
-      prompt: "$prompt <$englishText>",
+    final request = openai.CompleteText(
+      model: openai.kTextDavinci3,
+      prompt: "$prompt $englishText",
       maxTokens: 1024,
-      temperature: 0.5,
+      temperature: 0,
     );
     final response = await chatGPT!.onCompletion(request: request);
     final result = response!.choices[0].text;

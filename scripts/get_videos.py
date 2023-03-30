@@ -11,6 +11,8 @@ ALL_SPEAKERS = [ 'Lana', 'Dana', 'Liz', 'Tyler', 'Naomi', 'Jaimee' ]
 speakers = [ 'Tyler' ]
 metadata = {}
 
+WORDS = [ 'i', 'like2', 'anything', 'have1_own_something', 'chocolate', 'inside' ]
+
 def download_file(video_name):
     filename = 'data/' + video_name.replace('/', '_')
     url = 'http://vlm1.uta.edu/~haijing/asl/camera1/' + video_name
@@ -39,7 +41,7 @@ for speaker in speakers:
     metadata[speaker] = data
 
 for speaker in metadata:
-    metadata[speaker] = metadata[speaker].query('`Sign gloss`.str.len() == 1')
+    metadata[speaker] = metadata[speaker].query('`Sign gloss` in @WORDS')
 
 for speaker in metadata:
     with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
@@ -48,7 +50,8 @@ for speaker in metadata:
         line = line[1]
         try:
             in_filename = 'data/' + line['MOV'].replace('/', '_')
-            cropped_video = VideoFileClip(in_filename).subclip(0.017 * line['Gloss start'], 0.017 * line['Gloss end'])
+            clipped_video = VideoFileClip(in_filename).subclip(0.017 * line['Gloss start'], 0.017 * line['Gloss end'])
+            cropped_video = clipped_video.crop(x1=100, y1=45, x2=clipped_video.w-100, y2=clipped_video.h-80)
             out_filename = 'results/' + line['Sign gloss'] + ".mp4"
             cropped_video.write_videofile(out_filename, fps=25)
         except FileExistsError:
