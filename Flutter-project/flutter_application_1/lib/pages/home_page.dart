@@ -65,11 +65,11 @@ class _ExampleState extends State<Example> {
               gap: 8,
               activeColor: Colors.blue,
               iconSize: 24,
-              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              duration: Duration(milliseconds: 400),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              duration: const Duration(milliseconds: 400),
               tabBackgroundColor: Colors.blue[100]!,
               color: Colors.blue,
-              tabs: [
+              tabs: const [
                 GButton(
                   icon: LineIcons.speakap,
                   text: 'Translate',
@@ -93,7 +93,7 @@ class _ExampleState extends State<Example> {
                   _selectedIndex = index;
                   _pageController.animateToPage(
                     index,
-                    duration: Duration(milliseconds: 500),
+                    duration: const Duration(milliseconds: 500),
                     curve: Curves.ease,
                   );
                 });
