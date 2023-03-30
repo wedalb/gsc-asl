@@ -31,13 +31,12 @@ class _PageState extends State<LearnPage> {
 
   Future<void> textToVideo(Stream<String> text) async {
     await for(String gloss in text){
-      print('Loading file assets/videos/signs/$gloss.mp4');
-      print(File('assets/videos/signs/$gloss.mp4').hashCode);
       _controller = VideoPlayerController.asset('assets/videos/signs/$gloss.mp4');
       _initializeVideoPlayerFuture = _controller!.initialize();
       await _initializeVideoPlayerFuture;
-      await _controller!.play();
-      print('Video finished');
+      setState(() {}); // Reload UI
+      await _controller!.play(); // The video has started playing (not yet finished)
+      await Future.delayed( _controller!.value.duration );
     }
   }
 
