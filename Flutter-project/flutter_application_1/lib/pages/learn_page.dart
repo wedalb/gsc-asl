@@ -1,13 +1,24 @@
-import 'dart:io';
-
+import 'package:flutter_application_1/server.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
+import 'dart:io';
 
 Stream<String> getTextStream() async* {
-  // TODO
-  for(int i = 1; i<10; i++) {
-    yield "World";
-    yield "Hello";
+  //TODO
+  const text = """
+To be, or not to be, that is the question:
+Whether 'tis nobler in the mind to suffer
+The slings and arrows of outrageous fortune,
+Or to take Arms against a Sea of troubles,
+And by opposing end them: to die, to sleep
+No more; and by a sleep, to say we end
+The heart-ache, and the thousand natural shocks
+That Flesh is heir to? 'Tis a consummation
+Devoutly to be wished.
+  """;
+
+  for(String line in text.split("\n")) {
+    yield line;
   }
 }
 
@@ -44,6 +55,12 @@ class _PageState extends State<LearnPage> {
   void dispose(){
     _controller?.dispose(); // Make sure to dispose the Controller to free up resources
     super.dispose();
+  }
+
+  void toggleTextToVideo() async {
+    GlobalData.server.setEnglishTextStream( getTextStream() );
+    Stream<String> aslStream = (await GlobalData.server.getASLTextStream())!;
+    textToVideo( aslStream );
   }
 
   @override
@@ -104,7 +121,7 @@ class _PageState extends State<LearnPage> {
                       borderRadius: BorderRadius.circular(15),
                     ),
                   ),
-                  onPressed: () => textToVideo(getTextStream()),
+                  onPressed: toggleTextToVideo,
                   child: const Text(
                     'Text to video',
                     style: TextStyle(fontSize: 20),
