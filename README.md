@@ -25,7 +25,8 @@ cd Flutter-project/flutter_application_1/
 flutter run
 ```
 
-## Future direction
+## Future directions
 
 - ChatGPT for the translation was intended as a mock-up and should be replaced by our own machine learning model.
 - The front-end should display signs on a 3D avatar using [Flutter GL](https://github.com/wasabia/flutter_gl) or [Three.js on Dart](https://github.com/wasabia/three_dart)
+The `client` folder contains a first protype of 3D rendering using Three.js. A script to generate joint rotation maps from existing images can be found in the `data` folder.
